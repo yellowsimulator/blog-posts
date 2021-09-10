@@ -1,2 +1,6 @@
 venv
 .DS_Store
+video
+logs
+saved_model
+*.png

@@ -1,11 +1,15 @@
 """
 A file containing utilities functions
 """
-import matplotlib.pyplot as plt
+import io
+import os
+import cv2
+import itertools
 import numpy as np
 import tensorflow as tf
-import io
-import itertools
+from typing import List
+from glob import glob
+import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt
 
 
@@ -29,7 +33,8 @@ def plt_plot_to_tf_image(figure: plt.figure(figsize=(10, 10))):
 
 def plot_images(nb_images: int, X: np.ndarray,
                 y: np.ndarray, plot_image=True):
-    """plots images from a classification task.
+    """plots images from a classification task,
+       by default plot 25 images.
 
     Args:
         nb_images: number of images to plot.
@@ -39,8 +44,9 @@ def plot_images(nb_images: int, X: np.ndarray,
     figure = plt.figure(figsize=(10,10))
     factors = [k if nb_images%k==0 else -1 \
                  for k in range(1, nb_images + 1)]
-    w, h = factors[0], factors[1]
-    if len(factors) != 2:
+    if len(factors) > 2:
+        w, h = factors[0], factors[1]
+    else:
         w, h = 5, 5
         nb_images = 25
     for i in range(nb_images):
@@ -55,18 +61,19 @@ def plot_images(nb_images: int, X: np.ndarray,
     return figure
 
 
-def plot_confusion_matrix(cm, class_names):
+def plot_confusion_matrix(cm: np.ndarray, class_names: List):
     """
     Returns a matplotlib figure containing the plotted confusion matrix.
+
     Credit: 
         https://www.tensorflow.org/tensorboard/image_summaries
 
     Args:
         cm (array, shape = [n, n]): a confusion matrix of integer classes
-        class_names (array, shape = [n]): String names of the integer classes
+        class_names (array, shape = [n]): classe namse
     """
     figure = plt.figure(figsize=(8, 8))
-    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Greens)
     plt.title("Confusion matrix")
     plt.colorbar()
     tick_marks = np.arange(len(class_names))
@@ -80,12 +87,59 @@ def plot_confusion_matrix(cm, class_names):
         color = "white" if cm[i, j] > threshold else "black"
         plt.text(j, i, labels[i, j], horizontalalignment="center", color=color)
     plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
+    plt.ylabel('True label', fontsize=20)
+    plt.xlabel('Predicted label', fontsize=20)
     return figure
 
 
+def extract_frame_from_video(video_path: str, 
+                             frame_format: str, 
+                             frame_name: str,
+                             target_path: str):
+    """Extract images/frames from a video.
+
+    Args:
+        video_path: path to video
+        frame_format: format of the extracted frame.
+        frame_name: name of the extracted frame.
+        target_path: path or directory name to save 
+                     the frames.
+    """
+    if not os.path.exists(target_path):
+        os.makedirs(target_path)
+    frame_number = 0
+    capture = cv2.VideoCapture(video_path)
+    while(capture.isOpened()):
+        frame_exists, frame = capture.read()
+        if not frame_exists:
+            break
+        name = ''.join([frame_name, str(frame_number), \
+                f'.{frame_format}'])
+        path = f'{target_path}/{name}'
+        cv2.imwrite(path, frame)
+        frame_number += 1
+    capture.release()
+    cv2.destroyAllWindows()
 
 
-# # Define the per-epoch callback.
-# cm_callback = keras.callbacks.LambdaCallback(on_epoch_end=log_confusion_matrix)
+if __name__ == '__main__':
+    # videos_path = '../../video/inspection_camera'
+    # video_files = glob(f'{videos_path}/*.mkv')
+    # video_path = video_files[0]
+    # name = os.path.basename(video_path).split('.')[0]
+    # target_path = f'{videos_path}/{name}'
+    # print(video_path)
+    # print(name)
+
+    # frame_format = 'jpg'
+    # frame_name = 'frame'
+    # extract_frame_from_video(video_path, frame_format, 
+    #                           frame_name, target_path)
+
+    image = '../../video/inspection_camera/camera2_2020-11-25_11-46-48+0000/frame0.jpg'
+    #image = Image.open('../../video/inspection_camera/camera2_2020-11-25_11-46-48+0000/frame0.jpg')
+
+    img = cv2.imread(image)
+    mask = cv2.threshold(img, 200, 255, cv2.THRESH_BINARY)[1][:,:,0]
+    dst = cv2.inpaint(img, mask, 7, cv2.INPAINT_NS)
+    cv2.imwrite('im.jpg', dst) 
