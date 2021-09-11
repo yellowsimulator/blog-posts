@@ -26,12 +26,14 @@ def plt_plot_to_tf_image(figure: plt.figure(figsize=(10, 10))):
     plt.savefig(buffer, format='PNG')
     plt.close(figure)
     buffer.seek(0)
-    tf_image = tf.image.decode_png(contents=buffer.getvalue(), channels=0)
+    tf_image = tf.image.decode_png(contents=buffer.getvalue(), \
+           channels=0)
     tf_image = tf.expand_dims(tf_image, axis=0)
     return tf_image
 
 
-def plot_images(nb_images: int, X: np.ndarray,
+def plot_images(rows: int, columns: int, 
+                data_name: str, X: np.ndarray,
                 y: np.ndarray, plot_image=True):
     """plots images from a classification task,
        by default plot 25 images.
@@ -41,21 +43,24 @@ def plot_images(nb_images: int, X: np.ndarray,
         X: image array.
         y: label array.
     """
+    
+    nb_images = rows*columns
     figure = plt.figure(figsize=(10,10))
-    factors = [k if nb_images%k==0 else -1 \
-                 for k in range(1, nb_images + 1)]
-    if len(factors) > 2:
-        w, h = factors[0], factors[1]
-    else:
-        w, h = 5, 5
-        nb_images = 25
     for i in range(nb_images):
-        plt.subplot(w,h,i+1)
+        plt.subplot(rows,columns,i+1)
         plt.xticks([])
         plt.yticks([])
         plt.grid(False)
         plt.imshow(X[i], cmap=plt.cm.binary)
-        plt.xlabel(y[i])
+        if data_name == 'fashion_mnist':
+            class_name = \
+            ['T-shirt/top', 'Trouser', 
+             'Pullover', 'Dress', 'Coat',
+            'Sandal', 'Shirt', 'Sneaker', 
+            'Bag', 'Ankle boot']
+            plt.xlabel(class_name[y[i]])
+        else:
+            plt.xlabel(y[i])
     if plot_image is True:
         plt.show()
     return figure
@@ -123,6 +128,7 @@ def extract_frame_from_video(video_path: str,
 
 
 if __name__ == '__main__':
+    ...
     # videos_path = '../../video/inspection_camera'
     # video_files = glob(f'{videos_path}/*.mkv')
     # video_path = video_files[0]
@@ -136,10 +142,5 @@ if __name__ == '__main__':
     # extract_frame_from_video(video_path, frame_format, 
     #                           frame_name, target_path)
 
-    image = '../../video/inspection_camera/camera2_2020-11-25_11-46-48+0000/frame0.jpg'
-    #image = Image.open('../../video/inspection_camera/camera2_2020-11-25_11-46-48+0000/frame0.jpg')
-
-    img = cv2.imread(image)
-    mask = cv2.threshold(img, 200, 255, cv2.THRESH_BINARY)[1][:,:,0]
-    dst = cv2.inpaint(img, mask, 7, cv2.INPAINT_NS)
-    cv2.imwrite('im.jpg', dst) 
+    # image = '../../video/inspection_camera/camera2_2020-11-25_11-46-48+0000/frame0.jpg'
+   
