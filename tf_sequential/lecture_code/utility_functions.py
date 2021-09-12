@@ -5,6 +5,7 @@ import io
 import os
 import cv2
 import itertools
+import sklearn
 import numpy as np
 import tensorflow as tf
 from typing import List
@@ -14,7 +15,7 @@ import matplotlib.pyplot as plt
 
 
 def plt_plot_to_tf_image(figure: plt.figure(figsize=(10, 10))):
-    """Comverts a matplotlib plot to tensorflow image.
+    """Converts a matplotlib plot to tensorflow image.
 
     Credit: 
         https://www.tensorflow.org/tensorboard/image_summaries
@@ -66,7 +67,7 @@ def plot_images(rows: int, columns: int,
     return figure
 
 
-def plot_confusion_matrix(cm: np.ndarray, class_names: List):
+def get_confusion_matrix_plot(cm: np.ndarray, class_names: list):
     """
     Returns a matplotlib figure containing the plotted confusion matrix.
 
@@ -94,7 +95,36 @@ def plot_confusion_matrix(cm: np.ndarray, class_names: List):
     plt.tight_layout()
     plt.ylabel('True label', fontsize=20)
     plt.xlabel('Predicted label', fontsize=20)
+    #plt.show()
     return figure
+
+
+
+# def log_confusion_matrix(test_X: np.ndarray, test_y: np.ndarray, 
+#                          model: tf.keras.models, epoch: int, 
+#                          log_dir: str, class_names: list):
+#     """Logs a confusion matrix to TensorBoard.
+
+#     Args:
+#         test_X: Input test data fetures.
+#         test_y: Input data test labels/target.
+#         model: The trained model.
+#         epoch: Training epoch.
+#         log_dir: The directory containing tensorflow artifacts.
+#         class_names: The class names or labels.
+#     """
+#     test_pred_proba = model.predict(test_X)
+#     test_pred_label = np.argmax(test_pred_proba, axis=1)
+#     confusion_matrix = sklearn.metrics.confusion_matrix(test_y, \
+#                                           test_pred_label)
+#     cm_figure = get_confusion_matrix_plot(confusion_matrix, \
+#                                           class_names)
+#     cm_image = plt_plot_to_tf_image(cm_figure)
+#     cm_writer = tf.summary.create_file_writer(log_dir + \
+#                                      '/confusion_metrix')
+#     with cm_writer.as_default():
+#         tf.summary.image("Confusion Matrix", cm_image, step=epoch)
+
 
 
 def extract_frame_from_video(video_path: str, 

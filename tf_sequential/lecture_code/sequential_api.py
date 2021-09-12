@@ -12,10 +12,9 @@ import warnings
 import datetime
 from loguru import logger
 import numpy as np
+import sklearn
 from typing import Any, Dict
 import tensorflow as tf 
-from tensorflow.keras.datasets import mnist
-from tensorflow.keras.datasets import fashion_mnist
 import matplotlib.pyplot as plt
 from tensorflow.keras.layers import Input
 from tensorflow.keras.optimizers import Adam
@@ -23,35 +22,27 @@ from sklearn.metrics import confusion_matrix
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.models import load_model
 from tensorflow.keras.utils import plot_model
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.datasets import fashion_mnist
 from tensorflow.keras.callbacks import TensorBoard
 from tensorboard.plugins.hparams import api as hp
 from tensorflow.keras.callbacks import LambdaCallback
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.metrics import CategoricalAccuracy
-from tensorflow.keras.layers import Dense, Flatten, BatchNormalization
+from tensorflow.keras.layers import Dense, Flatten
+from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.losses import SparseCategoricalCrossentropy
-from tensorflow.python.keras.backend import flatten
+#from tensorflow.python.keras.backend import flatten
 # Local module import
-from utility_functions import plot_images
+from params import log_dir, hyperparams, class_name_fashion_mnist
+from utility_functions import get_confusion_matrix_plot
 from utility_functions import plt_plot_to_tf_image
-from utility_functions import plot_confusion_matrix
 # Supressing warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 warnings.filterwarnings('ignore')
 
 
-# hyperparameters
-hyperparams = {
-        'input_shape': (28, 28),
-        'units_layer_1': 128,
-        'units_layer_2': 128,
-        'units_last_layer': 10,
-        'epochs': 100,
-        'optimizer': 'adam',
-        'metric': 'accuracy'
-    }
-
-#@logger.catch
+@logger.catch
 def get_data(data_name: str='mnist'):
     """Returns train and test data. 
 
@@ -62,7 +53,6 @@ def get_data(data_name: str='mnist'):
     Returns:
         [tuple, np.ndarray]: train and test data
     """
-  
     data = {'mnist': mnist, 
             'fashion_mnist': fashion_mnist}
     (train_X, train_y), (test_X, test_y) = data[data_name].load_data()
@@ -70,7 +60,7 @@ def get_data(data_name: str='mnist'):
 
 
 
-#@logger.catch
+@logger.catch
 def get_model(hyperparams: Dict):
     """Returns a sequential model
 
@@ -82,20 +72,20 @@ def get_model(hyperparams: Dict):
     """
     return Sequential([
         Flatten(input_shape=hyperparams['input_shape']), 
-        
-        Dense(units=hyperparams['units_layer_1'], 
+        Dense(units=hyperparams['units_layer_1'], \
               activation='relu', name='layer_1'),
         BatchNormalization(),
-        Dense(units=hyperparams['units_layer_2'],
+        Dense(units=hyperparams['units_layer_2'], \
               activation='relu', name='layer_2'),
         BatchNormalization(),
-        Dense(units=hyperparams['units_last_layer'], 
+        Dense(units=hyperparams['units_last_layer'], \
               activation='softmax', name='last_layer')
     ])
 
 
-#@logger.catch
-def train_model(model: tf.keras.models, hyperparams: Dict, data_name: str='mnist'):
+@logger.catch
+def train_model(class_names: str, hyperparams: Dict,\
+                data_name: str='mnist'):
     """Trains a sequential model.
 
     Args:
@@ -103,6 +93,7 @@ def train_model(model: tf.keras.models, hyperparams: Dict, data_name: str='mnist
         hyperparams: dictionary of hyperparameters
         data_name: dataset name. Defaults to 'mnist'.
     """
+    model = get_model(hyperparams)
     train_X, train_y, test_X, test_y = get_data(data_name=data_name)
     # 1 - compile the model
     model.compile(
@@ -111,20 +102,36 @@ def train_model(model: tf.keras.models, hyperparams: Dict, data_name: str='mnist
         metrics=[hyperparams['metric']]
     )
     # 2 - fit and evaluate model
-    log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    cm_writer = tf.summary.create_file_writer(log_dir + '/cm')
+    def log_confusion_matrix(epoch, log_dir):
+        test_pred_proba = model.predict(test_X)
+        test_pred_label = np.argmax(test_pred_proba, axis=1)
+        confusion_matrix = sklearn.metrics.confusion_matrix(test_y, \
+                                          test_pred_label)
+        cm_figure = get_confusion_matrix_plot(confusion_matrix, \
+                                          class_names)
+        cm_image = plt_plot_to_tf_image(cm_figure)
+        with cm_writer.as_default():
+            tf.summary.image("Confusion Matrix", cm_image, step=epoch)
+    
     tensorboar_callback = TensorBoard(log_dir=log_dir, histogram_freq=1)
+    confusion_matrix_callback = LambdaCallback(on_epoch_end=log_confusion_matrix)
     model.fit(x=train_X,
               y=train_y, 
               epochs=hyperparams['epochs'],
               validation_data=(test_X, test_y),
-              callbacks=[tensorboar_callback])
+              callbacks=[tensorboar_callback, confusion_matrix_callback])
     
 
 
-def run_training():
+def run_training(data_name='mnist'):
     """Runs training."""
-    model = get_model(hyperparams)
-    train_model(model, hyperparams, data_name='mnist')
+    label_names = {
+        'mnist': [k for k in range(10)],
+        'fashion_mnist': class_name_fashion_mnist
+    }
+    class_names = label_names[data_name]
+    train_model(class_names, hyperparams, data_name)
 
 
 # @logger.catch
@@ -148,5 +155,5 @@ def run_training():
 
 
 if __name__ == '__main__':
-     train_X, train_y, test_X, test_y = get_data(data_name='mnist')
+    run_training(data_name='fashion_mnist')
 
