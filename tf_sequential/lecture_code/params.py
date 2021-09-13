@@ -20,9 +20,10 @@ hyperparams = {
         'metric': 'accuracy'
     }
 
-class_name_fashion_mnist = ['T-shirt/top', 'Trouser', 
+class_name_fashion_mnist = [
+             'T-shirt/top', 'Trouser', 
              'Pullover', 'Dress', 'Coat',
-            'Sandal', 'Shirt', 'Sneaker', 
-            'Bag', 'Ankle boot']
+             'Sandal', 'Shirt', 'Sneaker', 
+             'Bag', 'Ankle boot']
 
     
