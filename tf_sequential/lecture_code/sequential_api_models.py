@@ -45,7 +45,7 @@ def dense_model(hyperparams_dense: dict):
     Returns:
         [type]: [description]
     """
-    model_name = 'dense layers model'
+    model_name = 'dense_layers_model'
     model = Sequential([
         Flatten(input_shape=hyperparams_dense['input_shape']), 
         Dense(units=hyperparams_dense['units_layer_1'], \
@@ -60,30 +60,38 @@ def dense_model(hyperparams_dense: dict):
     return model, model_name
 
 
-def cnn_model(hyperparams_cnn: dict):
+def cnn_model():
     """Returns a convolution neural net model.
 
     Args:
         hyperparams_cnn: model hyperparameters
     """
-    model_name = 'convolution network layers model'
+    ...
+    model_name = 'convolution_network_model'
     model = Sequential([
         Conv2D(input_shape=(28, 28, 1),
-               kernel_size=...,
-               filters=...,
-               strides=...,
+               kernel_size=(3, 3),
+               filters=64,
+               strides=2,
                padding='same', 
                activation='relu', name='conv2d_layer_1'),
        BatchNormalization(name='batch_norm_1'),
        Conv2D(input_shape=(28, 28, 1),
-               kernel_size=...,
-               filters=...,
-               strides=...,
+               kernel_size=(3, 3),
+               filters=32,
+               strides=2,
                padding='same', 
                activation='relu', name='conv2d_layer_2'),
         BatchNormalization(name='batch_norm_2'),
-        Flatten(input_shape=(28, 28, 1)),
-        Dense(units=..., activation='softmax', name='output_layer')
+        Conv2D(input_shape=(28, 28, 1),
+               kernel_size=(3, 3),
+               filters=16,
+               strides=2,
+               padding='same', 
+               activation='relu', name='conv2d_layer_3'),
+        BatchNormalization(name='batch_norm_3'),
+        Flatten(),
+        Dense(units=10, activation='softmax', name='output_layer')
 
     ], name=model_name) 
     return model, model_name

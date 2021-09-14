@@ -18,3 +18,4 @@ scikit-image==0.18.3
 pytesseract==0.3.8
 pytesseract==0.3.8
 loguru==0.5.3
+tf-explain==0.3.0
