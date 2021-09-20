@@ -55,13 +55,13 @@ def train_model(model: tf.keras.models,
     train_X, train_y, test_X, test_y = get_data(data_name=data_name)
     train_X = train_X.reshape(train_X.shape[0], 28, 28, 1)
     test_X = test_X.reshape(test_X.shape[0], 28, 28, 1)
-    # 1 - compile the model
+    # compile the model
     model.compile(
         loss=hyperparams['loss'], 
         optimizer=hyperparams['optimizer'],
         metrics=[hyperparams['metric']]
     )
-    # call backs
+    # call backs setup
     tensorboar_callback = TensorBoard(log_dir=log_dir, histogram_freq=1)
     early_stop_callback = EarlyStopping(monitor='val_loss', patience=10)
     reduce_lr_callback = ReduceLROnPlateau(monitor='val_loss')
@@ -75,6 +75,7 @@ def train_model(model: tf.keras.models,
         layer_name='conv2d_layer_3',
         class_index=0,
         output_dir='logs/fit/grad_cam')
+    # fit model
     model.fit(x=train_X,
               y=train_y, 
               epochs=hyperparams['epochs'],
@@ -83,6 +84,7 @@ def train_model(model: tf.keras.models,
                          confusion_matrix_callback,
                          early_stop_callback, 
                          grad_cam_callback])
+    # save model
     model.save("model_repo/model1")
 
     

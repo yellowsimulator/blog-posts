@@ -15,10 +15,10 @@ hyperparams_dense = {
         'units_layer_1': 512,
         'units_layer_2': 512,
         'units_last_layer': 10,
-        'epochs': 2,
+        'epochs': 100,
         'optimizer': 'adam',
         'metric': 'accuracy',
-        'loss': SparseCategoricalCrossentropy()
+        'loss': SparseCategoricalCrossentropy(from_logits=True)
     }
 
 class_name_fashion_mnist = [

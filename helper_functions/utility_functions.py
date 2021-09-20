@@ -7,15 +7,11 @@ import io
 import os
 import cv2
 import sklearn
-import keras
 import itertools
 import numpy as np
 from glob import glob
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from IPython.display import Image, display
-import matplotlib.image as mpi
-import matplotlib.cm as cm
 from tensorflow.keras.datasets import mnist
 from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.datasets import fashion_mnist
@@ -25,8 +21,8 @@ from tensorflow.keras.callbacks import ReduceLROnPlateau
 from tensorflow.keras.callbacks import CSVLogger
 from tf_explain.callbacks.grad_cam import GradCAMCallback
 # Local libraries
-from params import log_dir, hyperparams_dense
-from params import  class_name_fashion_mnist
+#from params import log_dir, hyperparams_dense
+#from params import  class_name_fashion_mnist
 
 
 
@@ -144,71 +140,6 @@ def extract_frame_from_video(video_path: str,
         frame_number += 1
     capture.release()
     cv2.destroyAllWindows()
-
-
-def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None):
-    """[summary]
-    
-    Creadit: https://keras.io/examples/vision/grad_cam/
-
-    Args:
-        img_array ([type]): [description]
-        model ([type]): [description]
-        last_conv_layer_name ([type]): [description]
-        pred_index ([type], optional): [description]. Defaults to None.
-
-    Returns:
-        [type]: [description]
-    """
-    grad_model = tf.keras.models.Model(
-        [model.inputs], 
-        [model.get_layer(last_conv_layer_name).output, model.output]
-    )
-    with tf.GradientTape() as tape:
-        last_conv_layer_output, preds = grad_model(img_array)
-        if pred_index is None:
-            pred_index = tf.argmax(preds[0])
-        class_channel = preds[:, pred_index]
-    grads = tape.gradient(class_channel, last_conv_layer_output)
-    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
-    last_conv_layer_output = last_conv_layer_output[0]
-    heatmap = last_conv_layer_output @ pooled_grads[..., tf.newaxis]
-    heatmap = tf.squeeze(heatmap)
-    # For visualization purpose, we will also normalize the heatmap between 0 & 1
-    heatmap = tf.maximum(heatmap, 0) / tf.math.reduce_max(heatmap)
-    return heatmap.numpy()
-
-
-
-def save_and_display_gradcam(img_path, heatmap, cam_path="cam.jpg", alpha=0.4):
-    """[summary]
-
-    Credit: https://keras.io/examples/vision/grad_cam/
-
-    Args:
-        img_path ([type]): [description]
-        heatmap ([type]): [description]
-        cam_path (str, optional): [description]. Defaults to "cam.jpg".
-        alpha (float, optional): [description]. Defaults to 0.4.
-    """
-    img = img_path[0]#np.squeeze(img_path)
-    if isinstance(img_path, str):
-        img = keras.preprocessing.image.load_img(img_path)
-        img = keras.preprocessing.image.img_to_array(img)
-    heatmap = np.uint8(255 * heatmap)
-    jet = cm.get_cmap("jet")
-    jet_colors = jet(np.arange(256))[:, :1]
-    jet_heatmap = jet_colors[heatmap]
-    jet_heatmap = keras.preprocessing.image.array_to_img(jet_heatmap)
-    jet_heatmap = jet_heatmap.resize((img.shape[1], img.shape[0]))
-    jet_heatmap = keras.preprocessing.image.img_to_array(jet_heatmap)
-    superimposed_img = jet_heatmap + img
-    superimposed_img = keras.preprocessing.image.array_to_img(superimposed_img)
-    superimposed_img.save(cam_path)
-    im = mpi.imread(cam_path)
-    plt.imshow(im)
-    plt.show()
-    
 
 
 if __name__ == '__main__':
